@@ -1,0 +1,263 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Intrusive Robotics Delta",
+  "description": "Firmware documentation for the Intrusive Robotics Delta, a compact high-power GaN motor controller compatible with VESC software.",
+  "colors": {
+    "primary": "#FF6600",
+    "light": "#FF8A3D",
+    "dark": "#CC5200"
+  },
+  "favicon": "/images/favicon.png",
+  "logo": {
+    "light": "/images/logo-light.svg",
+    "dark": "/images/logo-dark.svg",
+    "href": "https://intrusiverobotics.com"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "fonts": {
+    "family": "Barlow",
+    "heading": {
+      "family": "Barlow Condensed",
+      "weight": 600
+    },
+    "body": {
+      "family": "Barlow"
+    }
+  },
+  "icons": {
+    "library": "fontawesome"
+  },
+  "banner": {
+    "content": "Delta is **compatible with VESC® software** but is not a VESC-branded product and is not affiliated with or endorsed by Benjamin Vedder or the VESC project.",
+    "dismissible": true,
+    "type": "info"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "guides/quickstart",
+              "guides/firmware-versioning"
+            ]
+          },
+          {
+            "group": "Hardware",
+            "icon": "microchip",
+            "pages": [
+              "hardware/overview",
+              "hardware/power-stage",
+              "hardware/current-sensing",
+              "hardware/flash-layout"
+            ]
+          },
+          {
+            "group": "Build and flash",
+            "icon": "screwdriver-wrench",
+            "pages": [
+              "build/toolchain",
+              "build/building",
+              "build/flashing",
+              "build/bootloader",
+              "build/troubleshooting"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "icon": "sliders",
+            "pages": [
+              "configuration/vesc-tool",
+              "configuration/motor-detection",
+              "configuration/foc-tuning",
+              "configuration/limits-and-faults",
+              "configuration/board-config"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Firmware reference",
+        "icon": "code",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "reference/architecture",
+              "reference/boot-and-startup",
+              "reference/hardware-abstraction",
+              "reference/configuration-storage"
+            ]
+          },
+          {
+            "group": "Motor control",
+            "icon": "bolt",
+            "pages": [
+              "reference/motor/mc-interface",
+              "reference/motor/mcpwm-foc",
+              "reference/motor/foc-math",
+              "reference/motor/virtual-motor"
+            ]
+          },
+          {
+            "group": "Sensing",
+            "icon": "compass",
+            "pages": [
+              "reference/sensing/encoders",
+              "reference/sensing/imu",
+              "reference/sensing/bms"
+            ]
+          },
+          {
+            "group": "Communication",
+            "icon": "tower-broadcast",
+            "pages": [
+              "documentation/comm_can",
+              "reference/comm/usb",
+              "reference/comm/packet-protocol",
+              "reference/comm/commands",
+              "reference/comm/terminal",
+              "reference/comm/logging"
+            ]
+          },
+          {
+            "group": "Applications",
+            "icon": "layer-group",
+            "pages": [
+              "reference/applications/overview",
+              "reference/applications/ppm",
+              "reference/applications/adc",
+              "reference/applications/uart",
+              "reference/applications/custom-app"
+            ]
+          },
+          {
+            "group": "Scripting",
+            "icon": "scroll",
+            "pages": [
+              "reference/lispbm/overview",
+              "reference/lispbm/vesc-extensions",
+              "reference/lispbm/examples"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Releases",
+        "icon": "tag",
+        "groups": [
+          {
+            "group": "Releases",
+            "pages": [
+              "releases/changelog",
+              "releases/upstream-changelog"
+            ]
+          },
+          {
+            "group": "Legal",
+            "pages": [
+              "legal/license",
+              "legal/provenance",
+              "legal/trademarks"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "icon": "github",
+          "href": "https://github.com/IntrusiveRobotics/Delta"
+        },
+        {
+          "anchor": "Latest release",
+          "icon": "download",
+          "href": "https://github.com/IntrusiveRobotics/Delta/releases/latest"
+        },
+        {
+          "anchor": "Upstream VESC project",
+          "icon": "code-branch",
+          "href": "https://github.com/vedderb/bldc"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "intrusiverobotics.com",
+        "href": "https://intrusiverobotics.com"
+      },
+      {
+        "type": "github",
+        "href": "https://github.com/IntrusiveRobotics/Delta"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Download firmware",
+      "href": "https://github.com/IntrusiveRobotics/Delta/releases/latest"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/IntrusiveRobotics",
+      "website": "https://intrusiverobotics.com"
+    },
+    "links": [
+      {
+        "header": "Documentation",
+        "items": [
+          { "label": "Quickstart", "href": "/guides/quickstart" },
+          { "label": "Building", "href": "/build/building" },
+          { "label": "Flashing", "href": "/build/flashing" },
+          { "label": "CAN bus", "href": "/documentation/comm_can" }
+        ]
+      },
+      {
+        "header": "Project",
+        "items": [
+          { "label": "Source", "href": "https://github.com/IntrusiveRobotics/Delta" },
+          { "label": "Releases", "href": "https://github.com/IntrusiveRobotics/Delta/releases" },
+          { "label": "Changelog", "href": "/releases/changelog" }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          { "label": "GPL v3.0", "href": "/legal/license" },
+          { "label": "Provenance", "href": "/legal/provenance" },
+          { "label": "Trademarks", "href": "/legal/trademarks" }
+        ]
+      }
+    ]
+  },
+  "search": {
+    "prompt": "Search the Delta firmware docs"
+  },
+  "contextual": {
+    "options": ["copy", "view", "claude", "chatgpt"],
+    "display": "header"
+  },
+  "metadata": {
+    "timestamp": true
+  },
+  "seo": {
+    "indexing": "navigable"
+  },
+  "variables": {
+    "firmwareVersion": "IR_FW1_5",
+    "vescBase": "6.05",
+    "mcu": "STM32F405RGT6",
+    "buildTarget": "fw_vesc_gan"
+  }
+}
