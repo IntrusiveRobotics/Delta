@@ -29,7 +29,8 @@ that release's binary, as required by the GPL.
 
 | Release | VESC base | Status |
 |---|---|---|
-| `IR_FW1_5` | 6.05 | current |
+| `IR_FW3_11` | 6.05 | current |
+| `IR_FW1_5` | 6.05 | superseded |
 
 ---
 

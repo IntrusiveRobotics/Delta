@@ -44,7 +44,7 @@
 #ifndef HW_VESC_GAN_CORE_H_
 #define HW_VESC_GAN_CORE_H_
 
-#define HW_NAME					"IR_FW1_5"
+#define HW_NAME					"IR_FW3_11"
 
 // HW properties
 #define HW_HAS_3_SHUNTS
@@ -119,10 +119,15 @@
 #ifndef V_REG
 #define V_REG					3.3
 #endif
-// VBAT divider: confirm values against Analog_Power schematic. With 12S charged
-// at 50.4 V, target ADC swing < 3.0 V. 39k / 2.7k -> 50.4 V * (2.7 / 41.7) = 3.26 V.
+// Divider ratio for BOTH the VBAT sense and the three phase-voltage senses -- the
+// board fits four identical dividers (R3/R4/R7/R15 top, R2/R5/R8/R16 bottom), and
+// ADC_VOLTS_PH_FACTOR is left at its 1.0 default, so mcpwm_foc scales phase voltage
+// with these same constants. Changing VIN_R1 moves both readings together.
+// Board rev 2: top leg 43.2k -> 68.1k. 68.1k / 2.2k -> full-scale range is
+// 3.3 V * (70.3 / 2.2) = 105.4 V, so the 93 V HW_LIM_VIN ceiling stays the binding
+// limit. 12S charged (50.4 V) reads 1.58 V; 8S charged (33.6 V) reads 1.05 V.
 #ifndef VIN_R1
-#define VIN_R1					43200.0
+#define VIN_R1					68100.0
 #endif
 #ifndef VIN_R2
 #define VIN_R2					2200.0
@@ -137,14 +142,27 @@
 // Input voltage
 #define GET_INPUT_VOLTAGE()		((V_REG / 4095.0) * (float)ADC_Value[ADC_IND_VIN_SENS] * ((VIN_R1 + VIN_R2) / VIN_R2))
 
-// NTC -- TDK NTCG164BH103FT1S, 10k @ 25C, beta = 3380 K. If using NTCG103JF103FT1
-// instead, change beta to 3435.
+// NTC -- 10k @ 25C, beta = 4067 K (board thermistor). SETTLED -- do not change
+// without re-measuring.
+//
+// 4067 K was confirmed by bench measurement on 2026-08-31, so the board-NTC
+// temperature reported by NTC_TEMP() is trusted and the
+// MCCONF_L_LIM_TEMP_FET_START/END limits below are referenced to a real
+// temperature.
+//
+// Note the datasheet beta of the intended NTCG164BH103FT1S is 3380 K and the
+// schematic's NTCG103JF103FT1 is 3435 K -- neither matches the measured 4067 K, so
+// the part actually populated is evidently NOT either of those. Reconcile the BOM
+// against the real part before respinning, and re-measure if the NTC is ever
+// substituted. Using 3380 K here over-reports by ~+15 C at 85 C, which would trip
+// the 95/115 C FET limits at ~81/96 C actual -- fail-safe, but it needlessly costs
+// thermal headroom.
 // Board NTC is wired HIGH-side: 3.3V -> NTC -> ADC node (PA3) -> 10k -> GND.
 // Heating drops R_ntc, which RAISES the ADC count, so resistance recovery is
 // R = 10k * (4095/adc - 1)  (note '*', not '/'). The low-side form read
 // temperature backwards (reported temp fell as the board heated).
 #define NTC_RES(adc_val)		(10000.0 * ((4095.0 / (float)adc_val) - 1.0))
-#define NTC_TEMP(adc_ind)		(1.0 / ((logf(NTC_RES(ADC_Value[adc_ind]) / 10000.0) / 3380.0) + (1.0 / 298.15)) - 273.15)
+#define NTC_TEMP(adc_ind)		(1.0 / ((logf(NTC_RES(ADC_Value[adc_ind]) / 10000.0) / 4067.0) + (1.0 / 298.15)) - 273.15)
 
 #define NTC_RES_MOTOR(adc_val)	(10000.0 / ((4095.0 / (float)adc_val) - 1.0))
 #define NTC_TEMP_MOTOR(beta)	(1.0 / ((logf(NTC_RES_MOTOR(ADC_Value[ADC_IND_TEMP_MOTOR]) / 10000.0) / beta) + (1.0 / 298.15)) - 273.15)
@@ -226,9 +244,13 @@
 
 // GaN dead time. LMG2100R026 has no body diode, so any dead-time conduction
 // flows through the GaN reverse-channel at ~2-3 V drop -- expensive at 60 A.
-// Bring up at 100 ns, scope switch nodes for shoot-through, then ratchet down
-// toward 40 ns (per CLAUDE.md target).
-#define HW_DEAD_TIME_NSEC		60.0
+// Bring a new board up at 100 ns, scope the switch nodes for shoot-through, then
+// ratchet down.
+//
+// conf_general_calculate_deadtime() quantises this to the timer's dead-time
+// generator step. At 168 MHz the DTG timebase is 5.952 ns, so 40.0 resolves to
+// DTG=6 -> 35.7 ns actual.
+#define HW_DEAD_TIME_NSEC		40.0
 
 // Default mc_configuration overrides for 6S-12S / 60 A target
 #ifndef MCCONF_L_MIN_VOLTAGE
@@ -241,13 +263,36 @@
 #define MCCONF_DEFAULT_MOTOR_TYPE		MOTOR_TYPE_FOC
 #endif
 #ifndef MCCONF_FOC_F_ZV
-#define MCCONF_FOC_F_ZV					60000.0
+#define MCCONF_FOC_F_ZV					30000.0
 #endif
 #ifndef MCCONF_L_MAX_ABS_CURRENT
 #define MCCONF_L_MAX_ABS_CURRENT		80.0
 #endif
 #ifndef MCCONF_FOC_SAMPLE_V0_V7
 #define MCCONF_FOC_SAMPLE_V0_V7			false
+#endif
+// Board has phase filters (HW_HAS_PHASE_FILTERS, PD2) but default them OFF on a
+// fresh config — overrides mcconf_default.h's "true". Still user-toggleable in VESC Tool.
+#ifndef MCCONF_FOC_PHASE_FILTER_ENABLE
+#define MCCONF_FOC_PHASE_FILTER_ENABLE	false
+#endif
+// If phase filters are enabled, only use them below this ERPM (default 4000).
+#ifndef MCCONF_FOC_PHASE_FILTER_MAX_ERPM
+#define MCCONF_FOC_PHASE_FILTER_MAX_ERPM	500.0
+#endif
+// No motor thermistor fitted by default — disable motor temp sensing so an open/
+// floating TEMP_MOTOR input can't fake a hot reading and derate/shut down the motor.
+// Overrides mcconf_default.h's TEMP_SENSOR_NTC_10K_25C. Re-selectable in VESC Tool.
+#ifndef MCCONF_M_MOTOR_TEMP_SENS_TYPE
+#define MCCONF_M_MOTOR_TEMP_SENS_TYPE	TEMP_SENSOR_DISABLED
+#endif
+// FET thermal derating: begin limiting at 95 C, full shutdown at 115 C (was 85/100).
+// GaN LMG2100R026 is rated to 150 C junction; 115 C board-NTC cutoff keeps margin.
+#ifndef MCCONF_L_LIM_TEMP_FET_START
+#define MCCONF_L_LIM_TEMP_FET_START		95.0
+#endif
+#ifndef MCCONF_L_LIM_TEMP_FET_END
+#define MCCONF_L_LIM_TEMP_FET_END		115.0
 #endif
 #ifndef MCCONF_L_IN_CURRENT_MAX
 #define MCCONF_L_IN_CURRENT_MAX			60.0
@@ -258,9 +303,9 @@
 
 // Hardware limits (upper clamps that the user cannot exceed in VESC Tool)
 // LMG2100R026 is 53 A continuous / 93 V continuous. Keep healthy margin.
-#define HW_LIM_CURRENT			-100.0, 100.0
-#define HW_LIM_CURRENT_IN		-100.0, 100.0
-#define HW_LIM_CURRENT_ABS		0.0, 135.0
+#define HW_LIM_CURRENT			-105.0, 105.0
+#define HW_LIM_CURRENT_IN		-105.0, 105.0
+#define HW_LIM_CURRENT_ABS		0.0, 165.0
 #define HW_LIM_VIN				8.0, 93.0
 #define HW_LIM_ERPM				-200e3, 200e3
 #define HW_LIM_DUTY_MIN			0.0, 0.05
